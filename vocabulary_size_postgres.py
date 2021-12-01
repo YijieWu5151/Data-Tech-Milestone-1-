@@ -85,7 +85,7 @@ cur = conn.cursor()
 # execute a SQL command
 query = """
 select count(text) from phrases
-where text like '%yinz%';
+where timestamp >='2021-12-01 01:17' and timestamp <='2021-12-01 01:18' and text like '%yinz%';
 """
 cur.execute(query)
 
