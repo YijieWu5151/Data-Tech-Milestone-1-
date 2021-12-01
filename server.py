@@ -69,7 +69,7 @@ def main():
     while True:
         url = ts.create_url()
         ts.connect_to_endpoint(url)
-        test_sub = "the"
+        test_sub = "new york"
         count_and_unique(test_sub)
         #     timeout += 1
 
