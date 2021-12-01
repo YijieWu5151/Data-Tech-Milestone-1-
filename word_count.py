@@ -68,7 +68,7 @@ def main():
 
     while True:
         url = ts.create_url()
-        ts.connect_to_endpoint(url)
+        ts.parse_from_twitter_stream(url)
         test_sub = "the"
         count_and_unique(test_sub)
         #     timeout += 1
