@@ -34,6 +34,9 @@ def bearer_oauth(r):
     return r
 
 def transform_json(twitter_jsons):
+    """
+    Takes list of Json string and converts it to [{"timestamp": <datetime>, "content": <content>}]
+    """
     final = []
     temp = []
     for twitter_json in twitter_jsons:
@@ -57,43 +60,18 @@ def transform_json(twitter_jsons):
     return final
 
 def write_transformed_tweets_to_file(transformed_tweets):
+    """
+    Converts list of tweets in  [{"timestamp": <datetime>, "content": <content>}] format to tweets.txt in "<YYYY-MM-DD-HH-MM-SS>, <tweet text>"
+    """
     with open('tweets.txt', 'w') as log:
         for transformed_tweet in transformed_tweets:
             log.write('{}\n'.format(str(transformed_tweet['timestamp'].strftime("%Y-%m-%d-%H-%M-%S")) + ', ' + str(transformed_tweet['content'])))
 
-def parse_twitter_response(twitter_response):
-    temp = []
-    final = []
-    twitter_jsons = []
-    i = 0
-    for response_line in twitter_response.iter_lines():
-        if response_line:
-            twitter_jsons.append(response_line)
-            i += 1
-        if i > 100:
-            break;
-    return transform_json(twitter_jsons)
-    print("done")
-    # timestamps = transformed_json[::2]
-    # timestamps = [datetime.strptime(i,"%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamps]
-    # timestamps = [i.strftime("%Y-%m-%d-%H-%M-%S") for i in timestamps]
 
-    # texts = final[1::2]
-    # texts = [" ".join(i.split()) for i in texts]
-
-    # with open('tweets.txt', 'w') as log:
-    #     for transformed_json in transformed_jsons:
-    #         log.write('{}\n'.format(str(transformed_json['timestamp'].strftime("%Y-%m-%d-%H-%M-%S")) + ', ' + str(transformed_json['content'])))
-
-        # for i in range(round(len(transformed_json)/2)):
-        #     log.write('{}\n'.format(str(timestamps[i]) + ', ' + str(texts[i])))
-
-    time.sleep(60)
-
-    return final
-
-
-def connect_to_endpoint(url):
+def parse_from_twitter_stream(url):
+    """
+    Transforms tweets from twitter sample stream into [{"timestamp": <datetime>, "content": <content>}]
+    """
     response = requests.request("GET", url, auth=bearer_oauth, stream=True)
     print(response.status_code)
     if response.status_code != 200:
@@ -103,7 +81,18 @@ def connect_to_endpoint(url):
 
             )
         )
-    return parse_twitter_response(response)
+
+    twitter_jsons = []
+    i = 0
+    for response_line in response.iter_lines():
+        if response_line:
+            twitter_jsons.append(response_line)
+            i += 1
+        if i > 100:
+            break;
+    result =  transform_json(twitter_jsons)
+    print("done")
+    return result
 
 
 
@@ -117,15 +106,17 @@ def main():
     print(args.file)
     transformed_json = []
     while True:
+        print("Looping")
         if args.file:
             jsons = []
             for line in args.file:
                 jsons.append(line)
+            args.file.seek(0)
             transformed_json = transform_json(jsons)
         else:
-           transformed_json = connect_to_endpoint(url)
+           transformed_json = parse_from_twitter_stream(url)
         write_transformed_tweets_to_file(transformed_json)
-        timeout += 1
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()
