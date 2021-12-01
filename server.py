@@ -12,7 +12,7 @@ import re
 #
 # args = parser.parse_args()
 # print(args.file_option(args.Stream))
-
+#testing
 def count_and_unique(test_sub):
     # Open the file in read mode
     text = open("tweets.txt", "r")
