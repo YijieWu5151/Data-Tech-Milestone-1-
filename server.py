@@ -1,79 +1,135 @@
-import Twiiter_stream as ts
-import pandas as pd
-import argparse
+import requests
+import os
+import json
+import time
 import re
-# parser = argparse.ArgumentParser(description='Create Twitter.txt file based on either a Twitter sample stream'
-#                                              'or a local JSON file')
-# parser.add_argument('Stream', metavar='T', type=str,
-#                     help='a Twitter Sample Stream object to be read in')
-# parser.add_argument('--filename', dest='file_option', action='store_const',
-#                     const=sum, default=max,
-#                     help='read in JSON file (Twitter sample stream is default)')
-#
-# args = parser.parse_args()
-# print(args.file_option(args.Stream))
-#testing
-def count_and_unique(test_sub):
-    # Open the file in read mode
-    text = open("tweets.txt", "r")
-    test_sub = test_sub
-    test_str = ""
-    # Create an empty dictionary
-    d = dict()
+import copy as copy
+from datetime import datetime
+from dataclasses import dataclass
+import argparse
 
-    # Loop through each line of the file
-    for line in text:
-        # Remove the leading spaces and newline character
-        line = line[20:]
-        line = line.strip()
-        line = re.sub('[^A-Za-z0-9]+', ' ', line)
-        #print(line)
-        line = re.sub('[^A-Za-z0]+', ' ', line)
-        #print(line)
-        # Convert the characters in line to
-        # lowercase to avoid case mismatch
-        line = line.lower()
 
-        # Split the line into words
-        words = line.split(" ")
-        #append each line to the test string
-        test_str = test_str + line
-        # Iterate over each word in line
-        for word in words:
-            # Check if the word is already in dictionary
-            if word in d:
-                # Increment count of word by 1
-                d[word] = d[word] + 1
-            else:
-                # Add the word to dictionary with count 1
-                d[word] = 1
 
-    # Print the contents of dictionary
-    #for key in sorted(d.keys()):
-        #print(key, ":", d[key])
+os.environ['BEARER_TOKEN'] = 'AAAAAAAAAAAAAAAAAAAAAGakUQEAAAAAucI%2FuyC5RvtNok3cESZ93ITkRxQ%3DegMxLb1Q1A67ZK5AJJcghTtmyOryBWouBG6TSpLAjDWRSDI3CQ'
+#print(os.environ)
+# To set your environment variables in your terminal run the following line:
+#'BEARER_TOKEN'= AAAAAAAAAAAAAAAAAAAAAGakUQEAAAAAucI%2FuyC5RvtNok3cESZ93ITkRxQ%3DegMxLb1Q1A67ZK5AJJcghTtmyOryBWouBG6TSpLAjDWRSDI3CQ
+bearer_token = os.environ.get("BEARER_TOKEN")
 
-    res = test_str.count(test_sub)
 
-    print("The count of '", test_sub, "'in tweets.txt:", res)
+def create_url():
+    #return "https://api.twitter.com/2/tweets/sample/stream"
+    return "https://api.twitter.com/2/tweets/sample/stream?tweet.fields=created_at"
 
-    print("The number of unique words in tweets.txt =",len(d))
-def use_file(file):
-    file + 1
-    return file
+
+
+
+def bearer_oauth(r):
+    """
+    Method required by bearer token authentication.
+    """
+
+    r.headers["Authorization"] = f"Bearer {bearer_token}"
+    r.headers["User-Agent"] = "v2SampledStreamPython"
+    return r
+
+def transform_json(twitter_jsons):
+    """
+    Takes list of Json string and converts it to [{"timestamp": <datetime>, "content": <content>}]
+    """
+    final = []
+    temp = []
+    for twitter_json in twitter_jsons:
+        json_response = json.loads(twitter_json)
+        #print(json.dumps(json_response, indent=4, sort_keys=True))
+        #print(json.dumps(json_response))
+        json_data = json_response['data']
+        json_temp = ({k: v for k, v in json_data.items() if k in ('created_at', 'text')})
+
+        temp = json_temp.values()
+
+        keys_values = json_temp.items()
+        temp = {str(key): str(value) for key, value in keys_values}
+
+        temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
+        tweet = {}
+        tweet['timestamp'] = datetime.strptime(temp['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        tweet['content'] = ' '.join(temp['text'].split())
+        final.append(tweet)
+        #print('tweet: timestamp:', tweet['timestamp'], ' content: ', tweet['content'])
+    return final
+
+def write_transformed_tweets_to_file(transformed_tweets):
+    """
+    Converts list of tweets in  [{"timestamp": <datetime>, "content": <content>}] format to tweets.txt in "<YYYY-MM-DD-HH-MM-SS>, <tweet text>"
+    """
+    with open('tweets.txt', 'a') as log:
+        for transformed_tweet in transformed_tweets:
+            num_written = log.write('{}\n'.format(str(transformed_tweet['timestamp'].strftime("%Y-%m-%d-%H-%M-%S")) + ', ' + str(transformed_tweet['content'])))
+            if num_written == 0:
+                raise Exception(
+                    "Cannot write to file. Disk full?")
+
+
+
+def parse_from_twitter_stream(url):
+    """
+    Transforms tweets from twitter sample stream into [{"timestamp": <datetime>, "content": <content>}]
+    """
+    response = requests.request("GET", url, auth=bearer_oauth, stream=True)
+    print(response.status_code)
+    if response.status_code != 200:
+        raise Exception(
+            "Request returned an error: {} {}".format(
+                response.status_code, response.text
+
+            )
+        )
+
+    twitter_jsons = []
+    i = 0
+    for response_line in response.iter_lines():
+        if response_line:
+            twitter_jsons.append(response_line)
+            i += 1
+        if i > 100:
+            break;
+    result =  transform_json(twitter_jsons)
+    print("done")
+    return result
+
+
 
 def main():
-
-
+    url = create_url()
     timeout = 0
 
+    parser = argparse.ArgumentParser(description='Transform twitter sample stream')
+    parser.add_argument('--filename', dest='file', type=argparse.FileType('r'))
+    args = parser.parse_args()
+    print(args.file)
+    transformed_json = []
     while True:
-        url = ts.create_url()
-        ts.connect_to_endpoint(url)
-        test_sub = "new york"
-        count_and_unique(test_sub)
-        #     timeout += 1
+        print("Looping")
+        if args.file:
+            jsons = []
+            for line in args.file:
+                jsons.append(line)
+            args.file.seek(0)
+            transformed_json = transform_json(jsons)
+        else:
+            try:
+                transformed_json = parse_from_twitter_stream(url)
+            except Exception:
+                print("Error accessing twitter api. Sleeping 60 seconds and trying again")
+                time.sleep(60)
+                continue
+        try:
+            write_transformed_tweets_to_file(transformed_json)
+        except Exception:
+            print("Error writing tweets to file.")
+        time.sleep(10)
 
 if __name__ == "__main__":
-
     main()
 
