@@ -12,6 +12,7 @@ def connect_db():
 def close_db_connection(conn):
     conn.commit()
     conn.close()
+
 connect_db()
 print("success connect to database")
 
@@ -61,15 +62,15 @@ for row in tweet_table:
             
 def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     ret = 0
-    #if minute_timestamp not in word_count_table:
-        #return 0        
+    if minute_timestamp not in word_count_table:
+        return 0
     if (word_count_table[minute_timestamp].get(single_word,-1)!=-1):
         ret = word_count_table[minute_timestamp][single_word]
     print("In "+minute_timestamp)
     print(single_word+":"+str(ret))
     return ret
 
-single_word_times_in_minute(word_count_table=word_count, minute_timestamp='2021-12-01 01:17',single_word="ball" )
-word_count = {}
-#single_word_times_in_minute(word_count_table=word_count, minute_timestamp='05:50:10', single_word="billboard")
-
+# single_word_times_in_minute(word_count_table=word_count, minute_timestamp="2021-12-02 20:14:39",single_word="today" )
+# word_count = {}
+# #single_word_times_in_minute(word_count_table=word_count, minute_timestamp='05:50:10', single_word="billboard")
+#
