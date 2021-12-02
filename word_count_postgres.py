@@ -47,6 +47,10 @@ for row in tweet_table:
     minute_timestamp = row['timestamp']
     minute_timestamp = minute_timestamp[:16]
     tweet_text = row['text'].split()
+
+#get function is to find if there are records about that minute in wordcount
+
+#if there is no record, just return to -1, then we create a dictionary，so the next time if won't return to -1, we could add words into word_count table directly. 
     if (word_count.get(minute_timestamp,-1)==-1):
         word_count[minute_timestamp] = {}
     print(tweet_text)
