@@ -1,12 +1,14 @@
+
 import pandas as pd
 import argparse
 import re
 
 
-def count_words(search_words):
+def count_words():
     # Open the file in read mode
     text = open("tweets.txt", "r")
-    test_str = ""
+    # Create an empty dictionary
+    d = dict()
 
     # Loop through each line of the file
     for line in text:
@@ -23,23 +25,22 @@ def count_words(search_words):
 
         # Split the line into words
         words = line.split(" ")
-        #append each line to the test string
-        test_str = test_str + line
+        # Iterate over each word in line
+        for word in words:
+            # Check if the word is already in dictionary
+            if word in d:
+                # Increment count of word by 1
+                d[word] = d[word] + 1
+            else:
+                # Add the word to dictionary with count 1
+                d[word] = 1
 
-    res = test_str.count(search_words)
 
-    print("The count of '", search_words, "'in tweets.txt:", res)
+    print("The number of unique words in tweets.txt =",len(d))
 
 def main():
-
-    parser = argparse.ArgumentParser(description='word count')
-    parser.add_argument('--word', dest='words', type=str)
-
-    args = parser.parse_args()
-
-    count_words(args.words.lower())
+    count_words()
 
 if __name__ == "__main__":
 
     main()
-

@@ -42,7 +42,7 @@ def transform_json(twitter_jsons):
     for twitter_json in twitter_jsons:
         json_response = json.loads(twitter_json)
         #print(json.dumps(json_response, indent=4, sort_keys=True))
-        print(json.dumps(json_response))
+        #print(json.dumps(json_response))
         json_data = json_response['data']
         json_temp = ({k: v for k, v in json_data.items() if k in ('created_at', 'text')})
 
@@ -63,9 +63,13 @@ def write_transformed_tweets_to_file(transformed_tweets):
     """
     Converts list of tweets in  [{"timestamp": <datetime>, "content": <content>}] format to tweets.txt in "<YYYY-MM-DD-HH-MM-SS>, <tweet text>"
     """
-    with open('tweets.txt', 'w') as log:
+    with open('tweets.txt', 'a') as log:
         for transformed_tweet in transformed_tweets:
-            log.write('{}\n'.format(str(transformed_tweet['timestamp'].strftime("%Y-%m-%d-%H-%M-%S")) + ', ' + str(transformed_tweet['content'])))
+            num_written = log.write('{}\n'.format(str(transformed_tweet['timestamp'].strftime("%Y-%m-%d-%H-%M-%S")) + ', ' + str(transformed_tweet['content'])))
+            if num_written == 0:
+                raise Exception(
+                    "Cannot write to file. Disk full?")
+
 
 
 def parse_from_twitter_stream(url):
@@ -114,8 +118,16 @@ def main():
             args.file.seek(0)
             transformed_json = transform_json(jsons)
         else:
-           transformed_json = parse_from_twitter_stream(url)
-        write_transformed_tweets_to_file(transformed_json)
+            try:
+                transformed_json = parse_from_twitter_stream(url)
+            except Exception:
+                print("Error accessing twitter api. Sleeping 60 seconds and trying again")
+                time.sleep(60)
+                continue
+        try:
+            write_transformed_tweets_to_file(transformed_json)
+        except Exception:
+            print("Error writing tweets to file.")
         time.sleep(10)
 
 if __name__ == "__main__":
