@@ -27,47 +27,60 @@ def execute_select(sql):
    return res
 
 #Creating a table
-# sql = "drop table if exists words;"
-# execute_sql(sql)
-# sql = "CREATE TABLE WORDS(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL, word_id NUMERIC NOT NULL,word varchar(1000) NOT NULL," \
-#       "CONSTRAINT word_pkey PRIMARY KEY (word_id));"
-# execute_sql(sql)
-#
-# print("Table created successfully........")
-#
-#
-# #Preparing query to create a database
-# conn = connect_db()
-# cur = conn.cursor()
-#
-# sql="select * from phrases"
-# tweet_table = execute_select(sql)
-# # print(ret)
-# print(tweet_table[0]['timestamp'])
-# j = 0 #Counter for PK in table
-#
-# conn = connect_db()
-# cur = conn.cursor()
-# for row in tweet_table:
-#    minute_timestamp = str(row['timestamp'])
-#    minute_timestamp = minute_timestamp[:16]
-#    tweet_id = str(row['tweet_id'])
-#    #minute_timestamp = 1
-#    tweet_text = row['text'].split()
-#    j += 100
-#
-#    for i in tweet_text:
-#       #print(tweet_id)
-#
-#       cur.execute("""insert into words(timestamp, tweet_id, word_id, word) values(%s,%s,%s,%s); """, (minute_timestamp, tweet_id, j, i))
-#
-#       sql = ("insert into words(timestamp, tweet_id, word_id, word) " + "values(%s,%s,%s,%s)" % (minute_timestamp,tweet_id, j, i) + ";")
-#       #print(sql)
-#
-#       #execute_sql(sql)
-#       j += 1
-#
-# close_db_connection(conn)
+sql = "drop table if exists words;"
+execute_sql(sql)
+sql = "CREATE TABLE WORDS(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL," \
+      " word_id NUMERIC NOT NULL,word varchar(1000) NOT NULL, phrase_yn NUMERIC NOT NULL," \
+      "CONSTRAINT word_pkey PRIMARY KEY (word_id));"
+execute_sql(sql)
+
+print("Table created successfully........")
+
+
+#Preparing query to create a database
+conn = connect_db()
+cur = conn.cursor()
+
+sql="select * from phrases"
+tweet_table = execute_select(sql)
+# print(ret)
+print(tweet_table[0]['timestamp'])
+j = 0 #Counter for PK in table
+
+conn = connect_db()
+cur = conn.cursor()
+for row in tweet_table:
+   minute_timestamp = str(row['timestamp'])
+   minute_timestamp = minute_timestamp[:16]
+   tweet_id = str(row['tweet_id'])
+   #minute_timestamp = 1
+   tweet_text = row['text'].split()
+   phrases = [tweet_text[i] + ' ' + tweet_text[i+1] for i in range(len(tweet_text)-1)]
+   j += 100
+
+   for i in tweet_text:
+      #print(tweet_id)
+
+      cur.execute("""insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) values(%s,%s,%s,%s,0); """, (minute_timestamp, tweet_id, j, i))
+
+      sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,%s,0)" % (minute_timestamp,tweet_id, j, i) + ";")
+      #print(sql)
+
+      #execute_sql(sql)
+      j += 1
+
+   for k in phrases:
+
+      cur.execute("""insert into words(timestamp, tweet_id, word_id, word, phrase_yn) values(%s,%s,%s,%s,1); """,
+                  (minute_timestamp, tweet_id, j, k))
+
+      sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,%s,1)" % (
+      minute_timestamp, tweet_id, j, k) + ";")
+      # print(sql)
+
+      # execute_sql(sql)
+      j += 1
+close_db_connection(conn)
 
 
 def word_count_in_minute( minute_timestamp, single_word):

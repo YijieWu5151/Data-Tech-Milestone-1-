@@ -74,6 +74,7 @@ def connect_to_endpoint(url):
     print(response.status_code)
     temp = []
     final = []
+    target = 1000
 
     for response_line in response.iter_lines():
         if response_line:
@@ -88,24 +89,20 @@ def connect_to_endpoint(url):
             #print(keys_values)
             temp = {str(key): str(value) for key, value in keys_values}
 
-            temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
+            temp['text'] = ''.join(filter(lambda character: ord(character) < 0x100, temp['text']))
             temp['text'] = clean_text(temp['text'])
-            temp['text'] = re.sub('@[^\s]+', '', temp['text']) #Remove usernames
-            temp['text'] = re.sub(r'\d+', '', temp['text']) #Remove numbers
+            temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
+            temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
+            temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+
             if temp['text'].strip() is '':
                 continue
             else:
                 final += temp.values()
-            #time.sleep(1)
+        if len(final) == target / 2:
+            print("50% Complete")
 
-            #print(final)
-
-            #myfile = open('text.txt', 'a')
-            # myFile.write(str(final))
-            # myFile.write('\n')  # adds a line between tweets
-            # myFile.close()
-
-        if len(final) > 1000:
+    if len(final) > target:
             timestamp = final[::2]
             timestamp = [datetime.strptime(i,"%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamp]
             timestamp = [i.strftime("%Y-%m-%d-%H-%M-%S") for i in timestamp]
@@ -118,9 +115,9 @@ def connect_to_endpoint(url):
                 for i in range(round(len(final)/2)):
                     log.write('{}\n'.format(str(timestamp[i]) + ', ' + str(text[i])))
 
-            print("done")
-            #time.sleep(60)
-            break
+                    print("done")
+                    #time.sleep(60)
+                    break
 
     if response.status_code != 200:
         raise Exception(

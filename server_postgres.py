@@ -1,4 +1,4 @@
-
+import string
 import psycopg2
 def connect_db():
     try:
@@ -91,6 +91,8 @@ def connect_to_endpoint(url):
     sql = "CREATE TABLE PHRASES(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL,text varchar(1000) NOT NULL," \
             "CONSTRAINT tweet_pkey PRIMARY KEY (tweet_id));"
     execute_sql(sql)
+    target = 1000
+
     for response_line in response.iter_lines():
         if response_line:
             json_response = json.loads(response_line)
@@ -108,13 +110,17 @@ def connect_to_endpoint(url):
                 temp['text']=clean_text(temp['text'])
                 temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
                 temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
+                temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+
                 if temp['text'].strip() is '':
                     continue
                 else:
                     final += temp.values()
+            if len(final) == target/2:
+                print("50% Complete")
 
+            if len(final) > target:
 
-            if len(final) > 1000:
                 timestamp = final[::2]
                 timestamp = [datetime.strptime(i,"%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamp]
                 timestamp = [i.strftime("%Y-%m-%d %H:%M:%S") for i in timestamp]
@@ -122,14 +128,17 @@ def connect_to_endpoint(url):
                 text = final[1::2]
                 text = [" ".join(i.split()) for i in text]
 
+                conn = connect_db()
+                cur = conn.cursor()
                 for i in range(round(len(final)/2)):
                     timestamp_value = "'"+str(timestamp[i])+"'"
                     text_value = str(text[i])
                     text_value = text_value.replace('\'', '')
                     text_value = "'"+text_value+"'"
-                    sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
-                    execute_sql(sql)
+                   # sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
+                    cur.execute("""insert into phrases(timestamp, tweet_id, text) values(%s,%s, %s);""", (timestamp_value,i,text_value))
 
+                close_db_connection(conn)
                 print("done")
                 time.sleep(600)
                 break
