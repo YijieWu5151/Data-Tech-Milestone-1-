@@ -48,21 +48,28 @@ for row in tweet_table:
     minute_timestamp = row['timestamp']
     minute_timestamp = minute_timestamp[:16]
     tweet_text = row['text'].split()
-
 #get function is to find if there are records about that minute in wordcount
-
-#if there is no record, just return to -1, then we create a dictionary，so the next time if won't return to -1, we could add words into word_count table directly. 
+#if there is no record, just return to -1, then we create a dictionary，so the next time if won't return to -1, 
+#we could add words into word_count table directly. 
     if (word_count.get(minute_timestamp,-1)==-1):
         word_count[minute_timestamp] = {}
-    print(tweet_text)
-    #print(word_count)
+    # print(tweet_text)
     for single_word in tweet_text:
-
         if (word_count[minute_timestamp].get(single_word,-1) == -1) :
             word_count[minute_timestamp][single_word] = 1
-        
-        else :
+        else:
             word_count[minute_timestamp][single_word] = word_count[minute_timestamp][single_word] + 1
+        tweet_phrase_text = []
+        for i in range(1,len(tweet_text)):
+            phrase=tweet_text[i-1]+" "+tweet_text[i]
+            tweet_phrase_text.append(phrase)
+        for phrase in tweet_phrase_text:
+            if (word_count[minute_timestamp].get(phrase,-1) == -1) :
+                word_count[minute_timestamp][phrase] = 1
+            else: 
+                word_count[minute_timestamp][phrase] = word_count[minute_timestamp][phrase] + 1 
+        break
+print(word_count)
             
 def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     ret = 0
