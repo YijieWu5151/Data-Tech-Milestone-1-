@@ -69,8 +69,8 @@ for row in tweet_table:
                 word_count[minute_timestamp][phrase] = word_count[minute_timestamp][phrase] + 1 
         break
 print(word_count)
-=======
-        print(tweet_text)
+
+        #print(tweet_text)
         for single_word in tweet_text:
 
          if (word_count[minute_timestamp].get(single_word,-1) == -1) :
@@ -78,7 +78,6 @@ print(word_count)
         
          else :
              word_count[minute_timestamp][single_word] = word_count[minute_timestamp][single_word] + 1
->>>>>>> f7f56a1668dbd6cb980a12f04f1008bd5f0e9efa
             
 def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     ret = 0
