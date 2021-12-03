@@ -51,14 +51,23 @@ for row in tweet_table:
     tweet_text = row['text'].split()
     if (word_count.get(minute_timestamp,-1)==-1):
         word_count[minute_timestamp] = {}
-     print(tweet_text)
-     for single_word in tweet_text:
-
-         if (word_count[minute_timestamp].get(single_word,-1) == -1) :
-             word_count[minute_timestamp][single_word] = 1
-        
-         else :
-             word_count[minute_timestamp][single_word] = word_count[minute_timestamp][single_word] + 1
+    # print(tweet_text)
+    for single_word in tweet_text:
+        if (word_count[minute_timestamp].get(single_word,-1) == -1) :
+            word_count[minute_timestamp][single_word] = 1
+        else:
+            word_count[minute_timestamp][single_word] = word_count[minute_timestamp][single_word] + 1
+        tweet_phrase_text = []
+        for i in range(1,len(tweet_text)):
+            phrase=tweet_text[i-1]+" "+tweet_text[i]
+            tweet_phrase_text.append(phrase)
+        for phrase in tweet_phrase_text:
+            if (word_count[minute_timestamp].get(phrase,-1) == -1) :
+                word_count[minute_timestamp][phrase] = 1
+            else: 
+                word_count[minute_timestamp][phrase] = word_count[minute_timestamp][phrase] + 1 
+        break
+print(word_count)
             
 def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     ret = 0
@@ -68,7 +77,7 @@ def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     print(single_word+":"+str(ret))
     return ret
     
-single_word_times_in_minute(word_count_table=word_count, minute_timestamp='2021-12-01 01:17',single_word="ball")
+single_word_times_in_minute(word_count_table=word_count, minute_timestamp='2021-12-02',single_word="ball")
 
 #def unique_words_in_current_minute(minute_timestamp,word_count_table):
     #print(len(word_count_table[minute_timestamp]))
@@ -76,20 +85,19 @@ single_word_times_in_minute(word_count_table=word_count, minute_timestamp='2021-
     #return len(word_count_table[minute_timestamp])
 #unique_words_in_current_minute(minute_timestamp='2021-11-17 07:38', word_count_table=word_count)
 
-import psycopg2
-conn = psycopg2.connect(database='Milestone2', user='postgres',
-                                password='123', host='127.0.0.1', port=5432)
-# create a cursor
-cur = conn.cursor()
-
-# execute a SQL command
-query = """
-select count(text) from phrases
-where timestamp >='2021-12-01 01:17' and timestamp <='2021-12-01 01:18' and text like '%yinz%';
-"""
-cur.execute(query)
+# import psycopg2
+# conn = psycopg2.connect(database='Milestone2', user='postgres',
+#                                 password='123', host='127.0.0.1', port=5432)
+# # create a cursor
+# cur = conn.cursor()
+#
+# # execute a SQL command
+# query = """
+# select count(text) from phrases
+# where timestamp >='2021-12-01 01:17' and timestamp <='2021-12-01 01:18' and text like '%yinz%';
+# """
+# cur.execute(query)
 
 # retrieve results
 for row in cur:
     print(row)
-
