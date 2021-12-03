@@ -120,3 +120,17 @@ def distinct_words_in_minute( minute_timestamp):
    return res
 
 distinct_words_in_minute('2021-12-02 20:42:00')
+
+# select
+# count(distinct
+# word) from words
+#
+# where
+# timestamp >= '2021-12-03 01:01:34'
+# and timestamp <= date_trunc('second', localtimestamp);
+#
+# select
+# date_trunc('minute', localtimestamp)
+# union
+# select
+# date_trunc('second', localtimestamp)
