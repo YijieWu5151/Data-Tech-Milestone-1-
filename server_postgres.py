@@ -91,7 +91,11 @@ def connect_to_endpoint(url):
     sql = "CREATE TABLE PHRASES(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL,text varchar(1000) NOT NULL," \
             "CONSTRAINT tweet_pkey PRIMARY KEY (tweet_id));"
     execute_sql(sql)
-    target = 1000
+    target = 2000
+    check = 0
+    max_time = 120
+    start_time = time.time()  # remember when we started
+
 
     for response_line in response.iter_lines():
         if response_line:
@@ -110,20 +114,23 @@ def connect_to_endpoint(url):
                 temp['text']=clean_text(temp['text'])
                 temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
                 temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
-                temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
-
+                #temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+                temp['text'] = re.sub(r'[^\w\s]', '', temp['text'])
+                #temp['text'] = temp['text'].replace("'", '')
                 if temp['text'].strip() is '':
                     continue
                 else:
                     final += temp.values()
-            if len(final) == target/2:
-                print("50% Complete")
 
-            if len(final) > target:
+                    if len(final) % (target / 10) == 0 and check < 11:
+                        print(str(check * 10) + "% Complete")
+                        check += 1
+
+            if len(final) > target and (time.time() - start_time) > max_time:
 
                 timestamp = final[::2]
                 timestamp = [datetime.strptime(i,"%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamp]
-                timestamp = [i.strftime("%Y-%m-%d %H:%M:%S") for i in timestamp]
+                #timestamp = [i.strftime("%Y-%m-%d %H:%M:%S") for i in timestamp]
 
                 text = final[1::2]
                 text = [" ".join(i.split()) for i in text]
@@ -134,14 +141,15 @@ def connect_to_endpoint(url):
                     timestamp_value = "'"+str(timestamp[i])+"'"
                     text_value = str(text[i])
                     text_value = text_value.replace('\'', '')
-                    text_value = "'"+text_value+"'"
+                    #text_value = "'"+text_value+"'"
                    # sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
                     cur.execute("""insert into phrases(timestamp, tweet_id, text) values(%s,%s, %s);""", (timestamp_value,i,text_value))
 
                 close_db_connection(conn)
                 print("done")
-                time.sleep(600)
-                break
+                return round(len(final)/2)
+               # time.sleep(600)
+               # break
 
     if response.status_code != 200:
         raise Exception(
@@ -157,9 +165,10 @@ def main():
     url = create_url()
     timeout = 0
 
-    while True:
+    while timeout == 0 :
         connect_to_endpoint(url)
         timeout += 1
+
 
 if __name__ == "__main__":
     main()
