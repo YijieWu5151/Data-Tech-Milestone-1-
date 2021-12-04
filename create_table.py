@@ -1,6 +1,8 @@
 import psycopg2
 from server_postgres import execute_sql
 from server_postgres import close_db_connection
+import server_postgres as sp
+import time
 
 def connect_db():
    try:
@@ -30,9 +32,9 @@ def word_table():
    #Creating a table
    sql = "drop table if exists words;"
    execute_sql(sql)
-   sql = "CREATE TABLE WORDS(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL," \
-         " word_id NUMERIC NOT NULL,word varchar(1000) NOT NULL, phrase_yn NUMERIC NOT NULL," \
-         "CONSTRAINT word_pkey PRIMARY KEY (word_id));"
+   sql = "CREATE TABLE WORDS(word_id SERIAL PRIMARY KEY,timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL," \
+         " word varchar(1000) NOT NULL, phrase_yn NUMERIC NOT NULL);"
+
    execute_sql(sql)
 
    print("Table created successfully........")
@@ -46,7 +48,7 @@ def word_table():
    tweet_table = execute_select(sql)
    # print(ret)
    #print(tweet_table[0]['timestamp'])
-   j = 0 #Counter for PK in table
+   j= 0
 
    conn = connect_db()
    cur = conn.cursor()
@@ -64,9 +66,9 @@ def word_table():
       for i in tweet_text:
          #print(tweet_id)
 
-         cur.execute("""insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) values(%s,%s,%s,%s,0); """, (minute_timestamp, tweet_id, j, i))
+         cur.execute("""insert into words(timestamp, tweet_id, word,  phrase_yn) values(%s,%s,%s,0); """, (minute_timestamp, tweet_id, i))
 
-         sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,%s,0)" % (minute_timestamp,tweet_id, j, i) + ";")
+         sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,0)" % (minute_timestamp,tweet_id, i) + ";")
          #print(sql)
 
          #execute_sql(sql)
@@ -74,11 +76,11 @@ def word_table():
 
       for k in phrases:
 
-         cur.execute("""insert into words(timestamp, tweet_id, word_id, word, phrase_yn) values(%s,%s,%s,%s,1); """,
-                     (minute_timestamp, tweet_id, j, k))
+         cur.execute("""insert into words(timestamp, tweet_id, word, phrase_yn) values(%s,%s,%s,1); """,
+                     (minute_timestamp, tweet_id, k))
 
-         sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,%s,1)" % (
-         minute_timestamp, tweet_id, j, k) + ";")
+         sql = ("insert into words(timestamp, tweet_id, word,  phrase_yn) " + "values(%s,%s,%s,1)" % (
+         minute_timestamp, tweet_id, k) + ";")
          # print(sql)
 
          # execute_sql(sql)
@@ -114,7 +116,7 @@ def word_frequency_in_minute( single_word):
    close_db_connection(conn)
 
    print('word_frequency_in_minute:')
-   print(res)
+   print(int(res[1]))
 
    return res
 
@@ -139,7 +141,7 @@ def distinct_words_in_minute():
    close_db_connection(conn)
 
    print('distinct_words_in_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #distinct_words_in_minute()
@@ -161,7 +163,7 @@ def phrases_in_current_minute():
    close_db_connection(conn)
 
    print('phrases_in_current_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #phrases_in_current_minute()
@@ -173,7 +175,7 @@ def phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp <= localtimestamp + interval '6 hours' - interval '1 minutes'
+         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours' 
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -183,7 +185,7 @@ def phrases_in_prior_minute():
    close_db_connection(conn)
 
    print('phrases_in_prior_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #phrases_in_prior_minute()
@@ -205,7 +207,7 @@ def distinct_phrases_in_current_minute():
    close_db_connection(conn)
 
    print('distinct_phrases_in_current_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #distinct_phrases_in_current_minute()
@@ -217,7 +219,7 @@ def distinct_phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp <= localtimestamp + interval '6 hours' - interval '1 minutes'
+         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours'
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -227,7 +229,7 @@ def distinct_phrases_in_prior_minute():
    close_db_connection(conn)
 
    print('distinct_phrases_in_prior_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #distinct_phrases_in_prior_minute()
@@ -236,11 +238,10 @@ def word_count_in_current_minute(single_word):
    conn = connect_db()
    cur = conn.cursor()
    sql = """select
-            count(distinct
-            word) from words
+            count(word) from words
             where
             timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' 
-            and timestamp <= localtimestamp + interval '6 hours'
+            and timestamp <= localtimestamp + interval '6 hours' 
             and word LIKE %s """
    cur.execute(sql , (single_word,))
    list_header = [row[0] for row in cur.description][0]
@@ -250,7 +251,7 @@ def word_count_in_current_minute(single_word):
    close_db_connection(conn)
 
    print('word_count_in_current_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #word_count_in_current_minute('year')
@@ -259,11 +260,10 @@ def word_count_in_prior_minute(single_word):
    conn = connect_db()
    cur = conn.cursor()
    sql = """select
-            count(distinct
-            word) from words
+            count(word) from words
             where
             timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-            and timestamp <= localtimestamp + interval '6 hours' - interval '1 minutes'
+            and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours'
             and word LIKE %s """
    cur.execute(sql , (single_word,))
    list_header = [row[0] for row in cur.description][0]
@@ -273,18 +273,16 @@ def word_count_in_prior_minute(single_word):
    close_db_connection(conn)
 
    print('word_count_in_prior_minute:')
-   print(res)
+   print(int(res[1]))
    return res
 
 #word_count_in_prior_minute('year')
 
 import math
 def trendiness_calc(phrase):
-    prob_current_minute = (1+ int(word_count_in_current_minute(phrase)[1])/
-                           int(phrases_in_current_minute()[1]) + int(distinct_phrases_in_current_minute()[1]))
-    prob_prior_minute = (1+ int(word_count_in_prior_minute(phrase)[1])/
-                           int(phrases_in_prior_minute()[1]) + int(distinct_phrases_in_prior_minute()[1]))
-    trendiness = math.log10(prob_current_minute/prob_prior_minute)
+    prob_current_minute = (1+ int(word_count_in_current_minute(phrase)[1]))/(int(phrases_in_current_minute()[1]) + int(distinct_phrases_in_current_minute()[1]))
+    prob_prior_minute = (1+ int(word_count_in_prior_minute(phrase)[1]))/ (int(phrases_in_prior_minute()[1]) + int(distinct_phrases_in_prior_minute()[1]))
+    trendiness = math.log10(prob_current_minute) - math.log10(prob_prior_minute)
 
     print('The Trendines Score of ' + str(phrase) + ' is ' + str(trendiness))
 
@@ -310,9 +308,18 @@ def trendiness_calc(phrase):
 def main():
    word_table()
 
-   trendiness_calc('the')
+   try:
+      trendiness_calc('the')
+   except ZeroDivisionError:
+      print("Not enough tweets in the current minute")
+      #sp.main(500)
 
-   trendiness_calc('like')
+   try:
+      trendiness_calc('like')
+   except ZeroDivisionError:
+      print("Not enough tweets in the current minute")
+      #sp.main(500)
+
 
 if __name__ == "__main__":
     main()

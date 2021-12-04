@@ -4,7 +4,7 @@ import time
 
 def main():
     sv.main()
-    #time.sleep(5)
+    time.sleep(1)
 
     ct.main()
 
