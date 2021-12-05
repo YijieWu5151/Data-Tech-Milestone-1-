@@ -2,7 +2,8 @@ import string
 import psycopg2
 def connect_db():
     try:
-        conn = psycopg2.connect(database='milestone2', user='gb760')
+        conn = psycopg2.connect(database='Milestone2', user='postgres',
+                              password='123', host='127.0.0.1', port=5432)
     except Exception as e:
         
         print("fail")
@@ -80,19 +81,18 @@ def bearer_oauth(r):
 
 
 
-def connect_to_endpoint(url):
+def connect_to_endpoint(url,target):
     response = requests.request("GET", url, auth=bearer_oauth, stream=True)
     print(response.status_code)
     temp = []
     final = []
     sql = "drop table if exists phrases;"
     execute_sql(sql)
-    sql = "CREATE TABLE PHRASES(timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL,text varchar(1000) NOT NULL," \
-            "CONSTRAINT tweet_pkey PRIMARY KEY (tweet_id));"
+    sql = "CREATE TABLE PHRASES(tweet_id SERIAL PRIMARY KEY,timestamp TIMESTAMP NOT NULL, text varchar(1000) NOT NULL);"
     execute_sql(sql)
-    target = 2000
+    #target = 2000
     check = 0
-    max_time = 120
+    max_time = 60
     start_time = time.time()  # remember when we started
 
 
@@ -110,13 +110,14 @@ def connect_to_endpoint(url):
                 temp = {str(key): str(value) for key, value in keys_values}
 
                 temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
-                temp['text']=clean_text(temp['text'])
+                #temp['text']=clean_text(temp['text'])
                 temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
                 temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
-                #temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+                temp['text'] = re.sub(r'http\S+', '', temp['text'])
+                temp['text'] = re.sub(r'RT', '', temp['text'])
                 temp['text'] = re.sub(r'[^\w\s]', '', temp['text'])
-                #temp['text'] = temp['text'].replace("'", '')
-                if temp['text'].strip() is '':
+                temp['text'] = temp['text'].replace("_", '')
+                if temp['text'].strip() == '':
                     continue
                 else:
                     final += temp.values()
@@ -140,15 +141,17 @@ def connect_to_endpoint(url):
                     timestamp_value = "'"+str(timestamp[i])+"'"
                     text_value = str(text[i])
                     text_value = text_value.replace('\'', '')
+
                     #text_value = "'"+text_value+"'"
                    # sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
-                    cur.execute("""insert into phrases(timestamp, tweet_id, text) values(%s,%s, %s);""", (timestamp_value,i,text_value))
+                    cur.execute("""insert into phrases(timestamp, text) values(%s, %s);""", (timestamp_value,text_value))
 
                 close_db_connection(conn)
                 print("done")
-                return round(len(final)/2)
+
+                #return round(len(final)/2)
                # time.sleep(600)
-               # break
+                break
 
     if response.status_code != 200:
         raise Exception(
@@ -160,12 +163,12 @@ def connect_to_endpoint(url):
     return final
 
 
-def main():
+def main(target = 2000):
     url = create_url()
     timeout = 0
 
     while timeout == 0 :
-        connect_to_endpoint(url)
+        connect_to_endpoint(url, target)
         timeout += 1
 
 

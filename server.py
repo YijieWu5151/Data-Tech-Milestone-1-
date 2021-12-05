@@ -81,11 +81,13 @@ def transform_json(twitter_jsons):
         tweet['timestamp'] = datetime.strptime(temp['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
         tweet['content'] = ' '.join(temp['text'].split())
 
-        tweet['content'] = clean_text(tweet['content'])
+        #tweet['content'] = clean_text(tweet['content'])
         tweet['content'] = re.sub('@[^\s]+', '', tweet['content'])  # Remove usernames
         tweet['content'] = re.sub(r'\d+', '', tweet['content'])  # Remove numbers
         tweet['content'] = re.sub(r'[^\w\s]','',tweet['content'])
         tweet['content'] = tweet['content'].replace("'", '')
+        tweet['content'] = re.sub(r'http\S+', '', tweet['content'])
+        tweet['content'] = re.sub(r'RT', '', tweet['content'])
         #tweet['content'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
         #tweet['content'] = ''.join(filter(lambda character: ord(character) < 0x100, tweet['content']))
 
