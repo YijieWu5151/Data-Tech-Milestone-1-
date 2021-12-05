@@ -2,8 +2,7 @@ import string
 import psycopg2
 def connect_db():
     try:
-        conn = psycopg2.connect(database='Milestone2', user='postgres',
-                                password='123', host='127.0.0.1', port=5432)
+        conn = psycopg2.connect(database='milestone2', user='gb760')
     except Exception as e:
         
         print("fail")
