@@ -91,7 +91,7 @@ def transform_json(twitter_jsons):
         #tweet['content'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
         #tweet['content'] = ''.join(filter(lambda character: ord(character) < 0x100, tweet['content']))
 
-        if tweet['content'].strip() is '':
+        if tweet['content'].strip() == '':
             continue
         else:
             #final += temp.values()
