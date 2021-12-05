@@ -1,3 +1,16 @@
+#import argparse
+
+#parser = argparse.ArgumentParser(description='Process some integers.')
+#parser.add_argument('--word',  type=str)
+#parser.add_argument('--day',  type=str)
+#parser.add_argument('--minute',  type=str)
+#parser.add_argument('--wordflag',type=str)
+#args = parser.parse_args()
+
+#input_word = args.word
+#input_time = args.day+' '+args.minute
+w#ord_flag = args.wordflag
+
 import psycopg2
 def connect_db():
     try:
@@ -80,7 +93,5 @@ def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
     print(single_word+":"+str(ret))
     return ret
 
-# single_word_times_in_minute(word_count_table=word_count, minute_timestamp="2021-12-02 20:14:39",single_word="today" )
-# word_count = {}
-# #single_word_times_in_minute(word_count_table=word_count, minute_timestamp='05:50:10', single_word="billboard")
+single_word_times_in_minute(word_count_table=word_count, minute_timestamp="2021-12-02 20:14:39",single_word="today" )
 #
