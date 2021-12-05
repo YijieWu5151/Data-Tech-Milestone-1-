@@ -89,7 +89,7 @@ def word_table():
 
    close_db_connection(conn)
 
-   return minute_timestamp
+
 
 
 def word_frequency_in_minute( single_word):
@@ -280,8 +280,9 @@ def word_count_in_prior_minute(single_word):
 
 import math
 def trendiness_calc(phrase):
-    prob_current_minute = (1+ int(word_count_in_current_minute(phrase)[1]))/(int(phrases_in_current_minute()[1]) + int(distinct_phrases_in_current_minute()[1]))
-    prob_prior_minute = (1+ int(word_count_in_prior_minute(phrase)[1]))/ (int(phrases_in_prior_minute()[1]) + int(distinct_phrases_in_prior_minute()[1]))
+    prob_current_minute = (1 + int(word_count_in_current_minute(phrase)[1]))/(int(phrases_in_current_minute()[1]) + int(distinct_phrases_in_current_minute()[1]))
+    prob_prior_minute = (1 + int(word_count_in_prior_minute(phrase)[1]))/ (int(phrases_in_prior_minute()[1]) + int(distinct_phrases_in_prior_minute()[1]))
+
     trendiness = math.log10(prob_current_minute) - math.log10(prob_prior_minute)
 
     print('The Trendines Score of ' + str(phrase) + ' is ' + str(trendiness))
@@ -320,6 +321,15 @@ def main():
       print("Not enough tweets in the current minute")
       #sp.main(500)
 
+   try:
+      trendiness_calc('love it')
+   except ZeroDivisionError:
+      print("Not enough tweets in the current minute")
+
+   try:
+      trendiness_calc('good')
+   except ZeroDivisionError:
+      print("Not enough tweets in the current minute")
 
 if __name__ == "__main__":
     main()
