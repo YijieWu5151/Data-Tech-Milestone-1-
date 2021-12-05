@@ -175,7 +175,7 @@ def phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours' 
+         and timestamp < date_trunc('minute', localtimestamp) + interval '6 hours' 
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -219,7 +219,7 @@ def distinct_phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours'
+         and timestamp < date_trunc('minute', localtimestamp) + interval '6 hours'
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -263,7 +263,7 @@ def word_count_in_prior_minute(single_word):
             count(word) from words
             where
             timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-            and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours'
+            and timestamp < date_trunc('minute', localtimestamp) + interval '6 hours'
             and word LIKE %s """
    cur.execute(sql , (single_word,))
    list_header = [row[0] for row in cur.description][0]

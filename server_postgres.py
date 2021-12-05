@@ -2,7 +2,8 @@ import string
 import psycopg2
 def connect_db():
     try:
-        conn = psycopg2.connect(database='milestone2', user='gb760')
+        conn = psycopg2.connect(database='Milestone2', user='postgres',
+                              password='123', host='127.0.0.1', port=5432)
     except Exception as e:
         
         print("fail")
@@ -109,13 +110,14 @@ def connect_to_endpoint(url,target):
                 temp = {str(key): str(value) for key, value in keys_values}
 
                 temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
-                temp['text']=clean_text(temp['text'])
+                #temp['text']=clean_text(temp['text'])
                 temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
                 temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
-                #temp['text'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+                temp['text'] = re.sub(r'http\S+', '', temp['text'])
+                temp['text'] = re.sub(r'RT', '', temp['text'])
                 temp['text'] = re.sub(r'[^\w\s]', '', temp['text'])
-                #temp['text'] = temp['text'].replace("'", '')
-                if temp['text'].strip() is '':
+                temp['text'] = temp['text'].replace("_", '')
+                if temp['text'].strip() == '':
                     continue
                 else:
                     final += temp.values()
