@@ -1,5 +1,7 @@
 import string
 import psycopg2
+import argparse
+
 def connect_db():
     try:
         conn = psycopg2.connect(database='Milestone2', user='postgres',
@@ -10,6 +12,7 @@ def connect_db():
     else:
         return conn
     return None
+
 def close_db_connection(conn):
     conn.commit()
     conn.close()
@@ -110,7 +113,7 @@ def connect_to_endpoint(url,target):
                 temp = {str(key): str(value) for key, value in keys_values}
 
                 temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
-                #temp['text']=clean_text(temp['text'])
+
                 temp['text'] = re.sub('@[^\s]+', '', temp['text'])  # Remove usernames
                 temp['text'] = re.sub(r'\d+', '', temp['text'])  # Remove numbers
                 temp['text'] = re.sub(r'http\S+', '', temp['text'])
@@ -138,7 +141,7 @@ def connect_to_endpoint(url,target):
                 conn = connect_db()
                 cur = conn.cursor()
                 for i in range(round(len(final)/2)):
-                    timestamp_value = "'"+str(timestamp[i])+"'"
+                    timestamp_value = str(timestamp[i])
                     text_value = str(text[i])
                     text_value = text_value.replace('\'', '')
 
@@ -162,16 +165,98 @@ def connect_to_endpoint(url,target):
         )
     return final
 
+def transform_json(twitter_jsons):
+    """
+    Takes list of Json string and converts it to [{"timestamp": <datetime>, "content": <content>}]
+    """
+    final = []
+    temp = []
+    for twitter_json in twitter_jsons:
+        json_response = json.loads(twitter_json)
+        #print(json.dumps(json_response, indent=4, sort_keys=True))
+        #print(json.dumps(json_response))
+        json_data = json_response['data']
+        json_temp = ({k: v for k, v in json_data.items() if k in ('created_at', 'text')})
+
+        temp = json_temp.values()
+
+        keys_values = json_temp.items()
+        temp = {str(key): str(value) for key, value in keys_values}
+
+        temp['text'] = ''.join(filter(lambda character:ord(character) < 0x100,temp['text']))
+        tweet = {}
+        tweet['timestamp'] = datetime.strptime(temp['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        tweet['content'] = ' '.join(temp['text'].split())
+
+        #tweet['content'] = clean_text(tweet['content'])
+        tweet['content'] = re.sub('@[^\s]+', '', tweet['content'])  # Remove usernames
+        tweet['content'] = re.sub(r'\d+', '', tweet['content'])  # Remove numbers
+        tweet['content'] = re.sub(r'[^\w\s]','',tweet['content'])
+        tweet['content'] = tweet['content'].replace("'", '')
+        tweet['content'] = re.sub(r'http\S+', '', tweet['content'])
+        tweet['content'] = re.sub(r'RT', '', tweet['content'])
+        #tweet['content'] = temp['text'].translate(str.maketrans('', '', string.punctuation))
+        #tweet['content'] = ''.join(filter(lambda character: ord(character) < 0x100, tweet['content']))
+
+        if tweet['content'].strip() == '':
+            continue
+        else:
+            #final += temp.values()
+            final.append(tweet)
+        #print('tweet: timestamp:', tweet['timestamp'], ' content: ', tweet['content'])
+
+    timestamp = final[::2]
+    timestamp = [datetime.strptime(i, "%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamp]
+    text = final[1::2]
+    text = [" ".join(i.split()) for i in text]
+
+    conn = connect_db()
+    cur = conn.cursor()
+    for i in range(round(len(final) / 2)):
+        timestamp_value = str(timestamp[i])
+        text_value = str(text[i])
+        text_value = text_value.replace('\'', '')
+
+        # text_value = "'"+text_value+"'"
+        # sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
+        cur.execute("""insert into phrases(timestamp, text) values(%s, %s);""", (timestamp_value, text_value))
+
+    close_db_connection(conn)
+    print("done")
+
+    return final
 
 def main(target = 2000):
+
     url = create_url()
     timeout = 0
 
-    while timeout == 0 :
-        connect_to_endpoint(url, target)
-        timeout += 1
+    parser = argparse.ArgumentParser(description='Transform twitter sample stream')
+    parser.add_argument('--filename', dest='file', type=argparse.FileType('r'))
+    args = parser.parse_args()
+    print(args.file)
+    transformed_json = []
+    while True:
+        print("Looping")
+        if args.file:
+            jsons = []
+            for line in args.file:
+                jsons.append(line)
+            args.file.seek(0)
+            transformed_json = transform_json(jsons)
+
+            print("json read complete. Lines Read: " + str(len(args.file)))
+            break
+
+        else:
+            try:
+                connect_to_endpoint(url,target)
+                break
+            except Exception:
+                print("Error accessing twitter api. Sleeping 60 seconds and trying again")
+                time.sleep(60)
+                continue
 
 
 if __name__ == "__main__":
     main()
-
