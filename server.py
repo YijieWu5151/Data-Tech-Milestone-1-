@@ -154,12 +154,15 @@ def main():
         print("Looping")
         if args.file:
             jsons = []
+            length = 0
             for line in args.file:
+                length += 1
                 jsons.append(line)
             args.file.seek(0)
             transformed_json = transform_json(jsons)
 
-            print("json read complete. Lines Read: " + str(len(args.file)))
+            print("json read complete. Lines Read: " + str(length))
+            break
 
         else:
             try:

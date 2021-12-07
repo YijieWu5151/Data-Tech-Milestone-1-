@@ -56,7 +56,7 @@ def word_table():
       minute_timestamp = str(row['timestamp'])
       #minute_timestamp = minute_timestamp[:16]
       tweet_id = str(row['tweet_id'])
-      row['text'] = row['text'].lower()
+      #row['text'] = row['text'].lower()
       #minute_timestamp = 1
       tweet_text = row['text'].split()
       phrases = [tweet_text[i] + ' ' + tweet_text[i+1] for i in range(len(tweet_text)-1)]

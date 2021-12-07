@@ -171,6 +171,9 @@ def transform_json(twitter_jsons):
     """
     final = []
     temp = []
+    conn = connect_db()
+    cur = conn.cursor()
+
     for twitter_json in twitter_jsons:
         json_response = json.loads(twitter_json)
         #print(json.dumps(json_response, indent=4, sort_keys=True))
@@ -205,17 +208,13 @@ def transform_json(twitter_jsons):
             final.append(tweet)
         #print('tweet: timestamp:', tweet['timestamp'], ' content: ', tweet['content'])
 
-    timestamp = final[::2]
-    timestamp = [datetime.strptime(i, "%Y-%m-%dT%H:%M:%S.%fZ") for i in timestamp]
-    text = final[1::2]
-    text = [" ".join(i.split()) for i in text]
+        text = tweet['content']
+        tweet['content'] = [" ".join(i.split()) for i in text]
 
-    conn = connect_db()
-    cur = conn.cursor()
-    for i in range(round(len(final) / 2)):
-        timestamp_value = str(timestamp[i])
-        text_value = str(text[i])
-        text_value = text_value.replace('\'', '')
+
+
+        timestamp_value = tweet['timestamp']
+        text_value = tweet['content'].replace('\'', '')
 
         # text_value = "'"+text_value+"'"
         # sql = ("insert into phrases(timestamp, tweet_id, text) "+"values(%s,%s, %s)" % (timestamp_value,i,text_value)+";")
@@ -226,7 +225,7 @@ def transform_json(twitter_jsons):
 
     return final
 
-def main(target = 2000):
+def main(target = 1000):
 
     url = create_url()
     timeout = 0
@@ -237,15 +236,17 @@ def main(target = 2000):
     print(args.file)
     transformed_json = []
     while True:
-        print("Looping")
+        #print("Looping")
         if args.file:
             jsons = []
+            length = 0
             for line in args.file:
+                length += 1
                 jsons.append(line)
             args.file.seek(0)
             transformed_json = transform_json(jsons)
 
-            print("json read complete. Lines Read: " + str(len(args.file)))
+            print("json read complete. Lines Read: " + str(length))
             break
 
         else:
