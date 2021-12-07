@@ -111,4 +111,20 @@ def distinct_words_in_minute():
    print(int(res[1]))
    return res
 
-distinct_words_in_minute()
+
+def main():
+
+
+   word_table()
+
+   try:
+      distinct_words_in_minute()
+
+   except Exception:
+      print("Error accessing database")
+
+
+if __name__ == "__main__":
+   main()
+
+

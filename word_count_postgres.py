@@ -121,19 +121,19 @@ def main():
 
     timeout = 0
 
-    parser = argparse.ArgumentParser(description='Count words in current minute')
-    parser.add_argument('--word', dest='phrase')
+    parser = argparse.ArgumentParser(description='word count')
+    parser.add_argument('--word', dest='words', type=str)
+
     args = parser.parse_args()
-    print(args.phrase)
-    transformed_json = []
 
 
-    if args.phrase:
+
+    if args.words:
         word_table()
 
         try:
-            word_count_in_current_minute(args.phrase)
-            #print("json read complete. Lines Read: " + str(len(args.file)))
+            word_count_in_current_minute(args.words.lower())
+
         except Exception:
             print("Error accessing Database")
 

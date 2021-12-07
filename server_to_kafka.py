@@ -1,6 +1,8 @@
 import server_postgres as sv
 import create_table as ct
-
+import word_count_postgres as wcp
+import vocabulary_size_postgres as vc
+import trendiness_postgres as tr
 import time
 
 def main():
@@ -21,8 +23,11 @@ def main():
     # wcp.word_count_in_current_minute('the')
     #
     # vc.distinct_words_in_minute()
-    ct.main()
+    #ct.main()
 
+    wcp.main()
+    vc.main()
+    tr.main()
 
 
 

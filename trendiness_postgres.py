@@ -237,15 +237,16 @@ def trendiness_calc(phrase):
 def main():
 
     parser = argparse.ArgumentParser(description='Trendiness in current minute')
-    parser.add_argument('--word', dest='phrase')
-    args = parser.parse_args()
-    print(args.phrase)
+    parser.add_argument('--word', dest='words', type=str)
 
-    if args.phrase:
+    args = parser.parse_args()
+
+
+    if args.words:
         word_table()
 
         try:
-            trendiness_calc(args.phrase)
+            trendiness_calc(args.words.lower())
 
         except ZeroDivisionError:
             print("Not enough tweets in the current minute")
