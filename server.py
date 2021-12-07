@@ -158,6 +158,9 @@ def main():
                 jsons.append(line)
             args.file.seek(0)
             transformed_json = transform_json(jsons)
+
+            print("json read complete. Lines Read: " + str(len(args.file)))
+
         else:
             try:
                 transformed_json = parse_from_twitter_stream(url)
