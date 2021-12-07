@@ -56,7 +56,7 @@ def word_table():
       minute_timestamp = str(row['timestamp'])
       #minute_timestamp = minute_timestamp[:16]
       tweet_id = str(row['tweet_id'])
-      row['text'] = row['text'].replace("'",'')
+      row['text'] = row['text'].lower()
       #minute_timestamp = 1
       tweet_text = row['text'].split()
       phrases = [tweet_text[i] + ' ' + tweet_text[i+1] for i in range(len(tweet_text)-1)]
@@ -175,7 +175,7 @@ def phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp < date_trunc('minute', localtimestamp) + interval '6 hours' 
+         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours' 
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -219,7 +219,7 @@ def distinct_phrases_in_prior_minute():
          from words
          where
          timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' - interval '1 minutes'
-         and timestamp < date_trunc('minute', localtimestamp) + interval '6 hours'
+         and timestamp <= date_trunc('minute', localtimestamp) + interval '6 hours'
          """
    cur.execute(sql)
    list_header = [row[0] for row in cur.description][0]
@@ -241,7 +241,7 @@ def word_count_in_current_minute(single_word):
             count(word) from words
             where
             timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' 
-            and timestamp <= localtimestamp + interval '6 hours' 
+            and timestamp < localtimestamp + interval '6 hours' 
             and word LIKE %s """
    cur.execute(sql , (single_word,))
    list_header = [row[0] for row in cur.description][0]
