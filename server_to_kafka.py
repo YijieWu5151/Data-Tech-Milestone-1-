@@ -23,11 +23,11 @@ def main():
     # wcp.word_count_in_current_minute('the')
     #
     # vc.distinct_words_in_minute()
-    #ct.main()
+    ct.main()
 
-    wcp.main()
-    vc.main()
-    tr.main()
+    # wcp.main()
+    # vc.main()
+    # tr.main()
 
 
 
