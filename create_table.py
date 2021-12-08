@@ -190,6 +190,7 @@ def phrases_in_prior_minute():
 
 #phrases_in_prior_minute()
 
+
 def distinct_phrases_in_current_minute():
    conn = connect_db()
    cur = conn.cursor()
