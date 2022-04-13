@@ -1,30 +1,23 @@
 import psycopg2
+from server_postgres import execute_sql
+from server_postgres import close_db_connection
+import server_postgres as sp
+import time
+import argparse
+
+
 def connect_db():
     try:
         conn = psycopg2.connect(database='Milestone2', user='postgres',
                                 password='123', host='127.0.0.1', port=5432)
     except Exception as e:
-        
+
         print("fail")
     else:
         return conn
     return None
-def close_db_connection(conn):
-    conn.commit()
-    conn.close()
-connect_db()
-print("success connect to database")
 
-import pprint
-def execute_sql(sql):
-    conn = connect_db()
-    cur = conn.cursor()
-    cur.execute(sql)
-    print(cur[0])
-    ret = cur
-    close_db_connection(conn)
-    print(sql)
-    return cur
+
 def execute_select(sql):
     conn = connect_db()
     cur = conn.cursor()
@@ -36,44 +29,122 @@ def execute_select(sql):
     # print(list_result)
     # print(res)
     return res
- 
-sql="select * from phrases"
-tweet_table = execute_select(sql)
-# print(ret)
-print(tweet_table[0]['timestamp'])
 
-word_count = {}
-for row in tweet_table:
-    minute_timestamp = row['timestamp']
-    minute_timestamp = minute_timestamp[:16]
-    tweet_text = row['text'].split()
 
-#get function is to find if there are records about that minute in wordcount
+def word_table():
+    # Creating a table
+    sql = "drop table if exists words;"
+    execute_sql(sql)
+    sql = "CREATE TABLE WORDS(word_id SERIAL PRIMARY KEY,timestamp TIMESTAMP NOT NULL, tweet_id NUMERIC NOT NULL," \
+          " word varchar(1000) NOT NULL, phrase_yn NUMERIC NOT NULL);"
 
-#if there is no record, just return to -1, then we create a dictionary，so the next time if won't return to -1, we could add words into word_count table directly. 
-    if (word_count.get(minute_timestamp,-1)==-1):
-        word_count[minute_timestamp] = {}
-    print(tweet_text)
-    #print(word_count)
-    for single_word in tweet_text:
+    execute_sql(sql)
 
-        if (word_count[minute_timestamp].get(single_word,-1) == -1) :
-            word_count[minute_timestamp][single_word] = 1
-        
-        else :
-            word_count[minute_timestamp][single_word] = word_count[minute_timestamp][single_word] + 1
-            
-def single_word_times_in_minute(word_count_table,minute_timestamp,single_word):
-    ret = 0
-    #if minute_timestamp not in word_count_table:
-        #return 0        
-    if (word_count_table[minute_timestamp].get(single_word,-1)!=-1):
-        ret = word_count_table[minute_timestamp][single_word]
-    print("In "+minute_timestamp)
-    print(single_word+":"+str(ret))
-    return ret
+    print("Table created successfully........")
 
-single_word_times_in_minute(word_count_table=word_count, minute_timestamp='2021-12-01 01:17',single_word="ball" )
-word_count = {}
-#single_word_times_in_minute(word_count_table=word_count, minute_timestamp='05:50:10', single_word="billboard")
+    # Preparing query to create a database
+    conn = connect_db()
+    cur = conn.cursor()
 
+    sql = "select * from phrases"
+    tweet_table = execute_select(sql)
+    # print(ret)
+    # print(tweet_table[0]['timestamp'])
+    j = 0
+
+    conn = connect_db()
+    cur = conn.cursor()
+    for row in tweet_table:
+        minute_timestamp = str(row['timestamp'])
+        # minute_timestamp = minute_timestamp[:16]
+        tweet_id = str(row['tweet_id'])
+        row['text'] = row['text'].replace("'", '')
+        # minute_timestamp = 1
+        tweet_text = row['text'].split()
+        phrases = [tweet_text[i] + ' ' + tweet_text[i + 1] for i in range(len(tweet_text) - 1)]
+
+        j += 100
+
+        for i in tweet_text:
+            # print(tweet_id)
+
+            cur.execute("""insert into words(timestamp, tweet_id, word,  phrase_yn) values(%s,%s,%s,0); """,
+                        (minute_timestamp, tweet_id, i))
+
+            sql = ("insert into words(timestamp, tweet_id, word_id, word,  phrase_yn) " + "values(%s,%s,%s,0)" % (
+            minute_timestamp, tweet_id, i) + ";")
+            # print(sql)
+
+            # execute_sql(sql)
+            j += 1
+
+        for k in phrases:
+            cur.execute("""insert into words(timestamp, tweet_id, word, phrase_yn) values(%s,%s,%s,1); """,
+                        (minute_timestamp, tweet_id, k))
+
+            sql = ("insert into words(timestamp, tweet_id, word,  phrase_yn) " + "values(%s,%s,%s,1)" % (
+                minute_timestamp, tweet_id, k) + ";")
+            # print(sql)
+
+            # execute_sql(sql)
+            j += 1
+
+    close_db_connection(conn)
+
+
+
+
+
+def word_count_in_current_minute(single_word):
+   conn = connect_db()
+   cur = conn.cursor()
+   sql = """select
+            count(word) from words
+            where
+            timestamp >= date_trunc('minute', localtimestamp) + interval '6 hours' 
+            and timestamp <= localtimestamp + interval '6 hours' 
+            and word LIKE %s """
+   cur.execute(sql , (single_word,))
+   list_header = [row[0] for row in cur.description][0]
+   list_result = [[str(item) for item in row] for row in cur.fetchall()][0][0]
+   res = [list_header, list_result]
+
+   close_db_connection(conn)
+
+   print('word_count_in_current_minute:')
+   print(int(res[1]))
+   return res
+
+
+
+def main():
+
+    timeout = 0
+
+    parser = argparse.ArgumentParser(description='word count')
+    parser.add_argument('--word', dest='words', type=str)
+
+    args = parser.parse_args()
+
+
+
+    if args.words:
+        word_table()
+
+        try:
+            word_count_in_current_minute(args.words.lower())
+
+        except Exception:
+            print("Error accessing Database")
+
+    else:
+        word_table()
+        try:
+            word_count_in_current_minute('the')
+
+        except Exception:
+            print("Error accessing database")
+
+
+if __name__ == "__main__":
+    main()
